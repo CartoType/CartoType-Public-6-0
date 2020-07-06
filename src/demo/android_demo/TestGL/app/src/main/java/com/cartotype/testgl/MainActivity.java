@@ -104,10 +104,7 @@ public class MainActivity extends AppCompatActivity
             setContentView(m_view);
 
             // Set the scale and create a scale bar after creating the main view, which creates a MapView which sets the screen resolution.
-            //framework.setScale(500000);
             framework.setScaleBar(true,3,"in",NoticePosition.BottomLeft);
-
-            framework.setNightMode(true);
 
             // Create a route.
             //int error = framework.startNavigation(-1.56815,50.6666,CoordType.Degree,-1.070261,50.684697,CoordType.Degree);
