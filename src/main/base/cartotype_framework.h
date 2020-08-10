@@ -706,6 +706,7 @@ class CFramework: public MNavigatorObserver
     size_t RouteCount() const;
     TResult ReverseRoutes();
     TResult DeleteRoutes();
+    TRouteCreationData RouteCreationData() const;
     TResult Navigate(const TNavigationData& aNavData);
     const TNavigatorTurn& FirstTurn() const;
     const TNavigatorTurn& SecondTurn() const;
@@ -880,6 +881,7 @@ class CFramework: public MNavigatorObserver
     TNavigatorParam iNavigatorParam;
     TLocationMatchParam iLocationMatchParam;
     std::vector<TRouteProfile> iRouteProfile;
+    TRouteCreationData iRouteCreationData;
     TPointFP iVehiclePosOffset;
     std::unique_ptr<CTileServer> iTileServer;
     int32_t iTileServerOverSizeZoomLevels = 1;

@@ -320,10 +320,6 @@ void CCartoTypeDemoView::OnDraw(CDC* pDC)
     if (iMapRenderer)
         return;
 
-#ifdef SHOW_DRAW_TIME
-    clock_t start_time = clock();
-#endif
-
     RECT clip;
     pDC->GetClipBox(&clip);
     CartoType::TRect dest_clip(clip.left,clip.top,clip.right,clip.bottom);
@@ -406,21 +402,6 @@ void CCartoTypeDemoView::OnDraw(CDC* pDC)
         ::StretchDIBits(*pDC,dest_clip.Left(),dest_clip.Top(),dest_clip.Width(),dest_clip.Height(),
         source_clip.Left(),map_bitmap->Height() - source_clip.Bottom(),source_clip.Width(),source_clip.Height(),
         map_data,(BITMAPINFO*)&bm,DIB_RGB_COLORS,SRCCOPY);
-
-#ifdef SHOW_DRAW_TIME
-    clock_t end_time = clock();
-    double milliseconds = double(end_time - start_time) / CLOCKS_PER_SEC * 1000;
-    CShape_demoApp* app = (CShape_demoApp*)AfxGetApp();
-    CMainFrame* main_window = (CMainFrame*)app->m_pMainWnd;
-    CStatusBar& status_bar = main_window->StatusBar();
-    char buffer[128];
-    if (redraw_needed)
-        sprintf(buffer,"%d objects drawn in %dms",(int)iFramework->ObjectsDrawn(),(int)(milliseconds + 0.5));
-    else
-        sprintf(buffer,"bitmap drawn in %dms",(int)(milliseconds + 0.5));
-    ::CString str = buffer;
-    status_bar.SetPaneText(0,str);
-#endif
     }
 
 void CCartoTypeDemoView::CalculateAndDisplayRoute()
@@ -435,9 +416,9 @@ void CCartoTypeDemoView::CalculateAndDisplayRoute()
         }
 
     CartoType::TResult error = 0;
+    CartoType::TRouteProfile profile = *iFramework->Profile(0);
     if (iBestRoute && cs.iRoutePointArray.size() > 3)
         {
-        CartoType::TRouteProfile profile(iRouteProfileType);
         size_t iterations = cs.iRoutePointArray.size() * cs.iRoutePointArray.size();
         if (iterations < 16)
             iterations = 16;
@@ -448,7 +429,26 @@ void CCartoTypeDemoView::CalculateAndDisplayRoute()
             error = iFramework->UseRoute(*r,true);
         }
     else
-        error = iFramework->StartNavigation(cs);
+        {
+        auto r = iFramework->CreateRoute(error,profile,cs);
+        if (!error)
+            error = iFramework->UseRoute(*r,true);
+        
+        if (!error)
+            {
+            CCartoTypeDemoApp* app = (CCartoTypeDemoApp*)AfxGetApp();
+            CMainFrame* main_window = (CMainFrame*)app->m_pMainWnd;
+            char buffer[256];
+            auto data = iFramework->RouteCreationData();
+            sprintf_s(buffer,"route creation = %gs, expansion = %gs, node queries = %d, node misses = %d, arc queries = %d, arc misses = %d",
+                      data.iRouteCalculationTime,data.iRouteExpansionTime,
+                      int(data.iNodeCacheQueries),int(data.iNodeCacheMisses),
+                      int(data.iArcCacheQueries),int(data.iArcCacheMisses));
+            CartoType::CString s = buffer;
+            s.Append((CartoType::uint16)0);
+            main_window->SetMessageText((LPCTSTR)s.Text());
+            }
+        }
 
     if (error)
         {
@@ -1044,10 +1044,31 @@ void CCartoTypeDemoView::OnInitialUpdate()
     TestCode();
     }
 
+static std::unique_ptr<CartoType::CRoute> CreateSnappedRoute(CartoType::TResult& aError,CartoType::CFramework& aFramework,
+                                                             const CartoType::TRouteProfile& aFindRoadProfile,const CartoType::TRouteProfile& aProfile,
+                                                             CartoType::TPointFP aStart,CartoType::TPointFP aEnd)
+    {
+    CartoType::TLocationMatchParam param;
+    param.iMaxRoadDistanceInMeters = 500;
+    aFramework.SetLocationMatchParam(param);
+    aFramework.SetMainProfile(aFindRoadProfile);
+    CartoType::TNearestRoadInfo info;
+    aError = aFramework.FindNearestRoad(info,aStart.iX,aStart.iY,CartoType::TCoordType::Degree,-1,false);
+    if (aError)
+        return nullptr;
+    aStart = info.iNearestPoint;
+    aError = aFramework.FindNearestRoad(info,aEnd.iX,aEnd.iY,CartoType::TCoordType::Degree,-1,false);
+    if (aError)
+        return nullptr;
+    aEnd = info.iNearestPoint;
+    CartoType::TCoordSetOfTwoPoints cs(aStart.iX,aStart.iY,aEnd.iX,aEnd.iY);
+    param.iMaxRoadDistanceInMeters = 15;
+    aFramework.SetLocationMatchParam(param);
+    return aFramework.CreateRoute(aError,aProfile,cs,CartoType::TCoordType::Map);
+    }
+
 void CCartoTypeDemoView::TestCode()
     {
-    auto bd = iFramework->AppBuildDate();
-    iFramework->SetCopyrightNotice(bd);
     }
 
 void CCartoTypeDemoView::OnSize(UINT nType,int cx,int cy)

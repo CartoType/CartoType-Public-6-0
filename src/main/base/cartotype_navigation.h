@@ -111,7 +111,7 @@ class TTurn
         *this = TTurn();
         }
 
-    /** Sets the TTurn object using inward and outward direction in degrees, left and right alternave choices, and fork and turn-off flags. */
+    /** Sets the TTurn object using inward and outward direction in degrees, left and right alternative choices, and fork and turn-off flags. */
     void SetTurn(double aInDir,double aOutDir,int32_t aChoices,int32_t aLeftAlternatives,int32_t aRightAlternatives,bool aIsFork,bool aTurnOff)
         {
         double turn_angle = aInDir - aOutDir;
@@ -761,6 +761,24 @@ class CRoute
     private:
     void GetPointAlongRouteHelper(const TPoint* aPoint,double* aDistance,double* aTime,
                                   TNearestSegmentInfo& aInfo,int32_t aSection,double aPreviousDistanceAlongRoute) const;
+    };
+
+/** Data on the cost of creating a route. */
+class TRouteCreationData
+    {
+    public:
+    /** The time take to calculate the route, in seconds. */
+    double iRouteCalculationTime = 0;
+    /** The time taken to expand the raw route into a route object, in seconds. */
+    double iRouteExpansionTime = 0;
+    /** The number of node cache queries, if relevant. */
+    int32_t iNodeCacheQueries = 0;
+    /** The number of node cache misses, if relevant. */
+    int32_t iNodeCacheMisses = 0;
+    /** The number of arc cache queries, if relevant. */
+    int32_t iArcCacheQueries = 0;
+    /** The number of arc cache misses, if relevant. */
+    int32_t iArcCacheMisses = 0;
     };
 
 /** States of the navigation system. */
