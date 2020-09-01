@@ -28,6 +28,7 @@ CFindTextDialog::CFindTextDialog():
 
 void CFindTextDialog::Set(CartoType::CFramework* aFramework)
     {
+    std::lock_guard<std::mutex> lock(iMapObjectGroupArrayMutex);
     iFramework = aFramework;
     iMapObjectGroupArray->clear();
     CartoType::TRectFP view;
@@ -40,7 +41,7 @@ CartoType::CMapObjectArray CFindTextDialog::FoundObjectArray()
     CartoType::CMapObjectArray a;
 
     std::lock_guard<std::mutex> lock(iMapObjectGroupArrayMutex);
-    if (iListBoxIndex >= 0 && size_t(iListBoxIndex) <= iMapObjectGroupArray->size())
+    if (iListBoxIndex >= 0 && size_t(iListBoxIndex) < iMapObjectGroupArray->size())
         a = std::move((*iMapObjectGroupArray)[iListBoxIndex].iMapObjectArray);
 
     else

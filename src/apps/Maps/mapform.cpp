@@ -869,6 +869,8 @@ void MapForm::FindAddress()
         else
             stop = true;
         }
+
+    m_main_window.UpdateFindNext();
     }
 
 void MapForm::FindNext()
@@ -879,16 +881,20 @@ void MapForm::FindNext()
 void MapForm::ShowNextFoundObject()
     {
     auto& object = m_found_object[m_found_object_index];
-    CartoType::uint32 memory_map_handle = m_framework->GetMemoryMapHandle();
-    CartoType::TTextLiteral(found_layer,u"found");
 
-    int radius = 0;
-    if (object->Type() == CartoType::TMapObjectType::Point)
-        radius = 50;
-    else if (object->Type() == CartoType::TMapObjectType::Line)
-        radius = 15;
-    CartoType::TResult error = m_framework->InsertCopyOfMapObject(memory_map_handle,found_layer,*object,radius,
-                                                                  CartoType::TCoordType::MapMeter,m_found_object_id,true);
+    CartoType::TResult error;
+    CartoType::TTextLiteral(found_layer,u"found");
+    if (object->Type() == CartoType::TMapObjectType::Line)
+        {
+        auto envelope = object->Envelope(5.0 / m_framework->MapUnitSize());
+        error = m_framework->InsertMapObject(0,CartoType::TMapObjectType::Polygon,found_layer,CartoType::CGeometry(envelope,CartoType::TCoordType::Map,true),"",0,m_found_object_id,true);
+        }
+    else
+        {
+        error = m_framework->InsertCopyOfMapObject(0,found_layer,*object,object->Type() == CartoType::TMapObjectType::Point ? 50 : 0,
+                                                  CartoType::TCoordType::MapMeter,m_found_object_id,true);
+        }
+
     if (!error)
         {
         bool animate = m_framework->SetAnimateTransitions(true);

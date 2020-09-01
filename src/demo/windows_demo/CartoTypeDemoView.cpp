@@ -1376,17 +1376,18 @@ void CCartoTypeDemoView::ShowNextFoundObject()
     summary.Append((CartoType::uint16)0);
     main_window->SetMessageText((LPCTSTR)summary.Text());
 
-    CartoType::uint32 memory_map_handle = iFramework->GetMemoryMapHandle();
     CartoType::TTextLiteral(found_layer,u"found");
-
-    int radius = 0;
-    if (object->Type() == CartoType::TMapObjectType::Point)
-        radius = 50;
-    else if (object->Type() == CartoType::TMapObjectType::Line)
-        radius = 5;
-    if (!error)
-        error = iFramework->InsertCopyOfMapObject(memory_map_handle,found_layer,*object,radius,
+    if (object->Type() == CartoType::TMapObjectType::Line)
+        {
+        auto envelope = object->Envelope(5.0 / iFramework->MapUnitSize());
+        error = iFramework->InsertMapObject(0,CartoType::TMapObjectType::Polygon,found_layer,CartoType::CGeometry(envelope,CartoType::TCoordType::Map,true),"",0,iFoundObjectId,true);
+        }
+    else
+        {
+        error = iFramework->InsertCopyOfMapObject(0,found_layer,*object,object->Type() == CartoType::TMapObjectType::Point ? 50 : 0,
                                                   CartoType::TCoordType::MapMeter,iFoundObjectId,true);
+        }
+
     if (!error)
         {
         bool animate = iFramework->SetAnimateTransitions(true);

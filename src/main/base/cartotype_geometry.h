@@ -55,7 +55,7 @@ template<class point_t> class CGeneralGeometry
         {
         AppendPoint(aPoint);
         }
-    /** Creates a geometry object containing the geometry of a map object. The geometry object is closed is the map object is a polygon or array (i.e., a texture), otherwise open. */
+    /** Creates a geometry object containing the geometry of a map object. The geometry object is closed if the map object is a polygon or array (i.e., a texture), otherwise open. */
     explicit CGeneralGeometry(const CMapObject& aMapObject):
         CGeneralGeometry(aMapObject,TCoordType::Map,aMapObject.Type() == TMapObjectType::Polygon || aMapObject.Type() == TMapObjectType::Array)
         {
